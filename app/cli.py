@@ -32,6 +32,7 @@ def hello(name):
     "--object_size",
     type=int,
     help="Size of the objects. Objects are rendered in square bounding boxes of given size",
+    default=18,
 )
 @click.option(
     "-o",
@@ -45,14 +46,14 @@ def hello(name):
     "--min_objects",
     type=int,
     help="Minimum number of objects to scatter",
-    default=20,
+    default=50,
 )
 @click.option(
     "-max",
     "--max_objects",
     type=int,
     help="Maximum number of objects to scatter",
-    default=40,
+    default=100,
 )
 @click.option(
     "-c",
@@ -75,6 +76,20 @@ def hello(name):
     help="Index ranges from 0-1. A value of 1 implies maximum clustering",
     default=1.0,
 )
+@click.option(
+    "-pad",
+    "--image_padding",
+    type=int,
+    help="Number of pixels inside the image border where objects should not be placed",
+    default=10,
+)
+@click.option(
+    "-v",
+    "--verbose",
+    type=bool,
+    help="Generate images noisily",
+    default=False,
+)
 def generate(
     object_directories,
     backgrounds,
@@ -85,6 +100,8 @@ def generate(
     image_size,
     output_directory,
     cluster_idx,
+    image_padding,
+    verbose,
 ):
     """
     Generate images with objects in OBJECT_DIRECTORIES scattered in them. Additionally generates YOLO annotations for each image.
@@ -93,17 +110,21 @@ def generate(
         print("No objects provided to scatter. Exiting..")
     else:
         click.echo("Generating images...")
-        print("got backgrounds", backgrounds)
-        image_generator = app.SyntheticGenerator(
-            object_directories,
-            backgrounds_dir=backgrounds,
-            object_size=object_size,
-            image_size=image_size,
-        )
-        image_generator.generete(
-            number_images=image_count,
-            cluster_idx=cluster_idx,
-            min_objects=min_objects,
-            max_objects=max_objects,
-            save_dir=output_directory,
-        )
+        try:
+            image_generator = app.SyntheticGenerator(
+                object_directories,
+                backgrounds_dir=backgrounds,
+                object_size=object_size,
+                image_size=image_size,
+                image_padding=image_padding,
+            )
+            image_generator.generete(
+                number_images=image_count,
+                cluster_idx=cluster_idx,
+                min_objects=min_objects,
+                max_objects=max_objects,
+                save_dir=output_directory,
+                verbose=verbose,
+            )
+        except:
+            print("Something went wrong, and image generation was not completed.")
