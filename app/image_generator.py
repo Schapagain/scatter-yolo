@@ -4,6 +4,7 @@ import math
 import random
 import os
 import sys
+from datetime import datetime
 
 
 class ScatterObject:
@@ -24,11 +25,12 @@ class SyntheticGenerator:
         backgrounds_dir: str = None,
         object_size: int = 18,
         image_size: int = 500,
+        image_padding: int = 10,
     ):
         self.image_height = image_size
         self.image_width = image_size
         self.object_size = object_size
-        self.boundary_radius = 250
+        self.boundary_radius = math.floor(image_size / 2) - image_padding
         self.scatter_object_paths = [
             Utility.getFilePathsFromDirectory(obj_dir) for obj_dir in object_directories
         ]
@@ -65,14 +67,14 @@ class SyntheticGenerator:
         overflows_horizontal = (
             top_left_x < 0
             or bot_right_x < 0
-            or top_left_x > self.image_width - self.object_size * 0.5
-            or bot_right_x > self.image_width - self.object_size * 0.5
+            or top_left_x > self.image_width - self.object_size
+            or bot_right_x > self.image_width - self.object_size
         )
         overflows_vertical = (
             top_left_y < 0
             or bot_right_y < 0
-            or top_left_y > self.image_height - self.object_size * 0.5
-            or bot_right_y > self.image_height - self.object_size * 0.5
+            or top_left_y > self.image_height - self.object_size
+            or bot_right_y > self.image_height - self.object_size
         )
 
         curr_center = Utility.boundingBoxToCenter(
@@ -183,6 +185,7 @@ class SyntheticGenerator:
         max_objects: int = 100,
         save_dir: str = "scatter_yolo_images",
         cluster_idx: float = 1,
+        verbose: bool = False,
     ) -> None:
         if not scatter_ratios:
             scatter_ratios = [1 / len(self.scatter_object_paths)] * len(
@@ -195,6 +198,7 @@ class SyntheticGenerator:
             os.makedirs(save_dir, exist_ok=True)
 
         for i in range(number_images):
+            start_time = datetime.now()
             im = Image.new("RGBA", (self.image_width, self.image_height))
             backgroundIm = (
                 (
@@ -231,11 +235,13 @@ class SyntheticGenerator:
                 )
                 total_count += 1
             backgroundIm.paste(im, mask=im)
-            backgroundIm.save(
-                f"{save_dir}/{image_count}-{'-'.join(list(map(str,counts)))}.png"
-            )
-            with open(
-                f"{save_dir}/{image_count}-{'-'.join(list(map(str,counts)))}.txt", "w+"
-            ) as f:
+
+            file_name = f"{save_dir}/{image_count}-{'-'.join(list(map(str,counts)))}"
+            backgroundIm.save(f"{file_name}.png")
+            if verbose:
+                print(
+                    f"Generated {file_name}.png in {(datetime.now() - start_time).total_seconds():.3f} seconds."
+                )
+            with open(f"{file_name}.txt", "w+") as f:
                 f.writelines(annotations)
             image_count += 1
