@@ -1,4 +1,4 @@
-from .utils import Utility
+from . import utils
 from PIL import Image, ImageDraw, ImageOps
 import math
 import random
@@ -32,10 +32,10 @@ class SyntheticGenerator:
         self.object_size = object_size
         self.boundary_radius = math.floor(image_size / 2) - image_padding
         self.scatter_object_paths = [
-            Utility.getFilePathsFromDirectory(obj_dir) for obj_dir in object_directories
+            utils.getFilePathsFromDirectory(obj_dir) for obj_dir in object_directories
         ]
         self.backgrounds_path = (
-            Utility.getFilePathsFromDirectory(backgrounds_dir)
+            utils.getFilePathsFromDirectory(backgrounds_dir)
             if backgrounds_dir
             else None
         )
@@ -77,7 +77,7 @@ class SyntheticGenerator:
             or bot_right_y > self.image_height - self.object_size
         )
 
-        curr_center = Utility.boundingBoxToCenter(
+        curr_center = utils.boundingBoxToCenter(
             curr_location,
             box_size=(
                 self.object_size,
@@ -106,18 +106,18 @@ class SyntheticGenerator:
             curr_location == SyntheticGenerator.INVALID_LOCATION
             or rand_num < separation_chance
         ):
-            next_location_center = Utility.getRandomCoordinate(
+            next_location_center = utils.getRandomCoordinate(
                 (round(self.image_width / 2), round(self.image_height / 2)),
                 self.boundary_radius,
             )
-            next_location = Utility.centerToBoundingBox(
+            next_location = utils.centerToBoundingBox(
                 next_location_center,
                 (self.object_size, self.object_size),
             )
         else:
             random.shuffle(angle_choices)
             next_angle = angle_choices.pop()
-            next_location = Utility.translateBoxInPolarCoords(
+            next_location = utils.translateBoxInPolarCoords(
                 curr_location,
                 self.object_size + SyntheticGenerator.OBJECT_SPACING,
                 next_angle,
@@ -131,11 +131,11 @@ class SyntheticGenerator:
             and retry_count < SyntheticGenerator.RANDOM_LOCATION_RETRIES_LIMIT
         ):
             if len(angle_choices) == 0:
-                next_location_center = Utility.getRandomCoordinate(
+                next_location_center = utils.getRandomCoordinate(
                     (round(self.image_width / 2), round(self.image_height / 2)),
                     self.boundary_radius,
                 )
-                next_location = Utility.centerToBoundingBox(
+                next_location = utils.centerToBoundingBox(
                     next_location_center,
                     (
                         self.object_size,
@@ -143,7 +143,7 @@ class SyntheticGenerator:
                     ),
                 )
             else:
-                next_location = Utility.translateBoxInPolarCoords(
+                next_location = utils.translateBoxInPolarCoords(
                     curr_location,
                     self.object_size + SyntheticGenerator.OBJECT_SPACING,
                     angle_choices.pop(),
@@ -224,7 +224,7 @@ class SyntheticGenerator:
                 next_spawn_location = self._getNextSpawnLocation(
                     next_spawn_location, pixels, separation_chance=1 - cluster_idx
                 )
-                next_spawn_center = Utility.boundingBoxToCenter(
+                next_spawn_center = utils.boundingBoxToCenter(
                     next_spawn_location,
                     (self.object_size, self.object_size),
                 )
