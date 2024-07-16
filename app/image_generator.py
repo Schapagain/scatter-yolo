@@ -5,6 +5,7 @@ import random
 import os
 import sys
 from datetime import datetime
+from enum import Enum
 
 
 class ScatterObject:
@@ -13,11 +14,19 @@ class ScatterObject:
         self.type = type
 
 
+class MaskShape(Enum):
+    Circle = "circle"
+    Circ = "circ"
+    Rect = "rect"
+    Rectangle = "rectangle"
+
+
 class SyntheticGenerator:
     INVALID_LOCATION = (-1, -1, -1, -1)
     OBJECT_SPACING = 3
     OVERLAP_PIXEL_THRESHOLD = 50000
     RANDOM_LOCATION_RETRIES_LIMIT = 300
+    ANNOTATION_FORMAT = "{:d} {:.4f} {:.4f} {:.4f} {:.4f}\n"
 
     def __init__(
         self,
@@ -67,14 +76,14 @@ class SyntheticGenerator:
         overflows_horizontal = (
             top_left_x < 0
             or bot_right_x < 0
-            or top_left_x > self.image_width - self.object_size
-            or bot_right_x > self.image_width - self.object_size
+            or top_left_x > self.image_width - self.object_size * 0.5
+            or bot_right_x > self.image_width - self.object_size * 0.5
         )
         overflows_vertical = (
             top_left_y < 0
             or bot_right_y < 0
-            or top_left_y > self.image_height - self.object_size
-            or bot_right_y > self.image_height - self.object_size
+            or top_left_y > self.image_height - self.object_size * 0.5
+            or bot_right_y > self.image_height - self.object_size * 0.5
         )
 
         curr_center = utils.boundingBoxToCenter(
@@ -187,6 +196,7 @@ class SyntheticGenerator:
         cluster_idx: float = 1,
         verbose: bool = False,
         animate: bool = False,
+        shape: str = MaskShape.Circ,
     ) -> None:
         if not scatter_ratios:
             scatter_ratios = [1 / len(self.scatter_object_paths)] * len(
@@ -237,7 +247,13 @@ class SyntheticGenerator:
                     animation_frames.append(bg_copy)
                 counts[next_object.type] += 1
                 annotations.append(
-                    f"{next_object.type} {next_spawn_center[0]/self.image_width:.4f} {next_spawn_center[1]/self.image_height:.4f} {self.object_size/self.image_width} {self.object_size/self.image_height}\n"
+                    SyntheticGenerator.ANNOTATION_FORMAT.format(
+                        next_object.type,
+                        next_spawn_center[0] / self.image_width,
+                        next_spawn_center[1] / self.image_height,
+                        self.object_size / self.image_width,
+                        self.object_size / self.image_height,
+                    )
                 )
                 total_count += 1
 
@@ -249,9 +265,17 @@ class SyntheticGenerator:
                     append_images=animation_frames[1:],
                     duration=2,
                 )
-            backgroundIm.paste(im, mask=im)
-
-            backgroundIm.save(f"{file_name}.png")
+            if shape == MaskShape.Circ.value or shape == MaskShape.Circle.value:
+                circle_mask = Image.new("L", im.size, 0)
+                draw = ImageDraw.Draw(circle_mask)
+                draw.ellipse((0, 0, self.image_width, self.image_height), fill=255)
+                bg_copy = backgroundIm.copy()
+                backgroundIm.paste(im, mask=im)
+                final_im = Image.composite(backgroundIm, bg_copy, circle_mask)
+                final_im.save(f"{file_name}.png")
+            else:
+                backgroundIm.paste(im, mask=im)
+                backgroundIm.save(f"{file_name}.png")
             if verbose:
                 print(
                     f"Generated {file_name}.png in {(datetime.now() - start_time).total_seconds():.3f} seconds."

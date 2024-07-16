@@ -33,6 +33,7 @@ def hello(name):
     type=int,
     help="Size of the objects. Objects are rendered in square bounding boxes of given size",
     default=18,
+    show_default=True,
 )
 @click.option(
     "-o",
@@ -40,6 +41,7 @@ def hello(name):
     type=click.Path(exists=False),
     help="Directory where generated images should be stored",
     default="scatter_yolo_images",
+    show_default=True,
 )
 @click.option(
     "-min",
@@ -47,6 +49,7 @@ def hello(name):
     type=int,
     help="Minimum number of objects to scatter",
     default=50,
+    show_default=True,
 )
 @click.option(
     "-max",
@@ -54,20 +57,23 @@ def hello(name):
     type=int,
     help="Maximum number of objects to scatter",
     default=100,
+    show_default=True,
 )
 @click.option(
     "-c",
     "--image_count",
     type=int,
-    help="Number of images to generate (default=1)",
+    help="Number of images to generate",
     default=1,
+    show_default=True,
 )
 @click.option(
     "-s",
     "--image_size",
     type=int,
-    help="Size of image(s) to generate (default=500).",
+    help="Size of image(s) to generate.",
     default=500,
+    show_default=True,
 )
 @click.option(
     "-cx",
@@ -75,6 +81,7 @@ def hello(name):
     type=float,
     help="Index ranges from 0-1. A value of 1 implies maximum clustering",
     default=1.0,
+    show_default=True,
 )
 @click.option(
     "-pad",
@@ -82,6 +89,7 @@ def hello(name):
     type=int,
     help="Number of pixels inside the image border where objects should not be placed",
     default=10,
+    show_default=True,
 )
 @click.option(
     "-v",
@@ -97,6 +105,14 @@ def hello(name):
     help="Generate object placement animation gifs along with the images",
     default=False,
 )
+@click.option(
+    "-sh",
+    "--shape",
+    type=str,
+    help="Shape of the final image (rect or circ)",
+    default="rect",
+    show_default=True,
+)
 def generate(
     object_directories,
     backgrounds,
@@ -110,6 +126,7 @@ def generate(
     image_padding,
     verbose,
     generate_animation,
+    shape,
 ):
     """
     Generate images with objects in OBJECT_DIRECTORIES scattered in them. Additionally generates YOLO annotations for each image.
@@ -134,6 +151,7 @@ def generate(
                 save_dir=output_directory,
                 verbose=verbose,
                 animate=generate_animation,
+                shape=shape,
             )
         except:
             print("Something went wrong, and image generation was not completed.")
