@@ -26,7 +26,7 @@ def cli():
     "--object_size",
     type=int,
     help="Size of the objects. Objects are rendered in square bounding boxes of given size",
-    default=18,
+    default=26,
     show_default=True,
 )
 @click.option(
@@ -74,7 +74,7 @@ def cli():
     "--cluster_idx",
     type=float,
     help="Index ranges from 0-1. A value of 1 implies maximum clustering",
-    default=1.0,
+    default=0.2,
     show_default=True,
 )
 @click.option(
@@ -107,6 +107,13 @@ def cli():
     default="rect",
     show_default=True,
 )
+@click.option(
+    "-rat",
+    "--scatter-ratio",
+    type=str,
+    help="Relative proportions of objects",
+    default=None,
+)
 def generate(
     object_directories,
     backgrounds,
@@ -121,15 +128,26 @@ def generate(
     verbose,
     generate_animation,
     shape,
+    scatter_ratio,
 ):
     """
     Generate images with objects in OBJECT_DIRECTORIES scattered in them. Additionally generates YOLO annotations for each image.
     """
+    scatter_ratios = []
     if len(object_directories) == 0:
         print("No objects provided to scatter. Exiting..")
     else:
-        click.echo("Generating images...")
+
         try:
+            if scatter_ratio:
+                scatter_ratios = list(map(float, scatter_ratio.split(",")))
+                print(scatter_ratios, scatter_ratio, object_directories)
+                if len(scatter_ratios) != len(object_directories):
+                    click.echo(
+                        "Ratios length does not match the number of objects provided. Exiting.."
+                    )
+                    raise Exception()
+            click.echo("Generating images...")
             image_generator = app.SyntheticGenerator(
                 object_directories,
                 backgrounds_dir=backgrounds,
@@ -146,6 +164,7 @@ def generate(
                 verbose=verbose,
                 animate=generate_animation,
                 shape=shape,
+                scatter_ratios=scatter_ratios,
             )
-        except:
-            print("Something went wrong, and image generation was not completed.")
+        except Exception as e:
+            print("Something went wrong, and image generation was not completed.", e)
