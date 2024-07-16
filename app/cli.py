@@ -90,6 +90,13 @@ def hello(name):
     help="Generate images noisily",
     default=False,
 )
+@click.option(
+    "-anim",
+    "--generate_animation",
+    type=bool,
+    help="Generate object placement animation gifs along with the images",
+    default=False,
+)
 def generate(
     object_directories,
     backgrounds,
@@ -102,6 +109,7 @@ def generate(
     cluster_idx,
     image_padding,
     verbose,
+    generate_animation,
 ):
     """
     Generate images with objects in OBJECT_DIRECTORIES scattered in them. Additionally generates YOLO annotations for each image.
@@ -125,6 +133,7 @@ def generate(
                 max_objects=max_objects,
                 save_dir=output_directory,
                 verbose=verbose,
+                animate=generate_animation,
             )
         except:
             print("Something went wrong, and image generation was not completed.")

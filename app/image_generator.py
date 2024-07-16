@@ -186,6 +186,7 @@ class SyntheticGenerator:
         save_dir: str = "scatter_yolo_images",
         cluster_idx: float = 1,
         verbose: bool = False,
+        animate: bool = False,
     ) -> None:
         if not scatter_ratios:
             scatter_ratios = [1 / len(self.scatter_object_paths)] * len(
@@ -214,6 +215,7 @@ class SyntheticGenerator:
             total_count = 0
             counts = [0] * len(self.scatter_object_paths)
             annotations = []
+            animation_frames = []
 
             while total_count < random.randint(min_objects, max_objects) and (
                 total_count == 0
@@ -229,14 +231,26 @@ class SyntheticGenerator:
                     (self.object_size, self.object_size),
                 )
                 im.paste(next_object.image, next_spawn_location, next_object.image)
+                if animate:
+                    bg_copy = backgroundIm.copy()
+                    bg_copy.paste(im, mask=im)
+                    animation_frames.append(bg_copy)
                 counts[next_object.type] += 1
                 annotations.append(
                     f"{next_object.type} {next_spawn_center[0]/self.image_width:.4f} {next_spawn_center[1]/self.image_height:.4f} {self.object_size/self.image_width} {self.object_size/self.image_height}\n"
                 )
                 total_count += 1
-            backgroundIm.paste(im, mask=im)
 
             file_name = f"{save_dir}/{image_count}-{'-'.join(list(map(str,counts)))}"
+            if animate:
+                animation_frames[0].save(
+                    f"{file_name}.gif",
+                    save_all=True,
+                    append_images=animation_frames[1:],
+                    duration=2,
+                )
+            backgroundIm.paste(im, mask=im)
+
             backgroundIm.save(f"{file_name}.png")
             if verbose:
                 print(
