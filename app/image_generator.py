@@ -6,6 +6,11 @@ import os
 import sys
 from datetime import datetime
 from enum import Enum
+from PIL import GifImagePlugin
+
+GifImagePlugin.LOADING_STRATEGY = (
+    GifImagePlugin.LoadingStrategy.RGB_AFTER_DIFFERENT_PALETTE_ONLY
+)
 
 
 class ScatterObject:
@@ -244,6 +249,7 @@ class SyntheticGenerator:
                 if animate:
                     bg_copy = backgroundIm.copy()
                     bg_copy.paste(im, mask=im)
+                    bg_copy.convert("RGB")
                     animation_frames.append(bg_copy)
                 counts[next_object.type] += 1
                 annotations.append(
@@ -264,14 +270,16 @@ class SyntheticGenerator:
                     save_all=True,
                     append_images=animation_frames[1:],
                     duration=2,
+                    lossless=True,
+                    optimize=False,
                 )
             if shape == MaskShape.Circ.value or shape == MaskShape.Circle.value:
                 circle_mask = Image.new("L", im.size, 0)
                 draw = ImageDraw.Draw(circle_mask)
                 draw.ellipse((0, 0, self.image_width, self.image_height), fill=255)
-                bg_copy = backgroundIm.copy()
+                empty_image = Image.new("RGBA", im.size)
                 backgroundIm.paste(im, mask=im)
-                final_im = Image.composite(backgroundIm, bg_copy, circle_mask)
+                final_im = Image.composite(backgroundIm, empty_image, circle_mask)
                 final_im.save(f"{file_name}.png")
             else:
                 backgroundIm.paste(im, mask=im)
