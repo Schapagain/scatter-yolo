@@ -9,12 +9,6 @@ def cli():
     pass
 
 
-@cli.command()
-@click.option("-n", "--name", type=str, help="Name to say hello to", default="Guest")
-def hello(name):
-    click.echo(f"Hello again {name}!")
-
-
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument(
     "object_directories",
