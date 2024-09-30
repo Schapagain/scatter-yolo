@@ -1,5 +1,9 @@
 import click
 from . import image_generator as app
+from datetime import datetime
+import multiprocessing
+import math
+from os.path import join
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -155,16 +159,34 @@ def generate(
                 image_size=image_size,
                 image_padding=image_padding,
             )
-            image_generator.generete(
-                number_images=image_count,
+            
+            processes = []
+            start_time = datetime.now()
+            MAX_IMAGES_PER_PROCESS = 10
+            num_generated = 0
+            num_process_required = math.ceil(image_count/MAX_IMAGES_PER_PROCESS)
+            for process_num in range(num_process_required):
+                process_image_count = min(image_count-process_num*MAX_IMAGES_PER_PROCESS,MAX_IMAGES_PER_PROCESS)
+                p = multiprocessing.Process(target=image_generator.generete,kwargs=dict(
+                number_images=process_image_count,
                 cluster_idx=cluster_idx,
                 min_objects=min_objects,
                 max_objects=max_objects,
                 save_dir=output_directory,
                 verbose=verbose,
+                file_name_prefix=str(process_num),
                 animate=generate_animation,
                 shape=shape,
-                scatter_ratios=scatter_ratios,
+                scatter_ratios=scatter_ratios,))
+                processes.append(p)
+                p.start()
+                num_generated += process_image_count
+            
+            for p in processes:
+                p.join()
+
+            print(
+                f"Generated {num_generated} images in {(datetime.now() - start_time).total_seconds():.3f} seconds."
             )
         except Exception as e:
             print("Something went wrong, and image generation was not completed.", e)
