@@ -198,6 +198,7 @@ class SyntheticGenerator:
         min_objects: int = 50,
         max_objects: int = 100,
         save_dir: str = "scatter_yolo_images",
+        file_name_prefix: str = "i",
         cluster_idx: float = 1,
         verbose: bool = False,
         animate: bool = False,
@@ -263,7 +264,7 @@ class SyntheticGenerator:
                 )
                 total_count += 1
 
-            file_name = f"{save_dir}/{image_count}-{'-'.join(list(map(str,counts)))}"
+            file_name = f"{save_dir}/{file_name_prefix}-{image_count}-{'-'.join(list(map(str,counts)))}"
             if animate:
                 animation_frames[0].save(
                     f"{file_name}.gif",
